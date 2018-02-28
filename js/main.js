@@ -24,9 +24,21 @@ window.onload = function() {
   getLastWeekDate();
 };
 
+let clean_report = function(parent, child) {
+  for (let i = 0; i < child.length; i++) {
+    parent.removeChild(child[i]);
+  }
+};
+
 let buildReport = function() {
   const done_list = document.getElementById('sos_done');
+  // clean_report(done_list,done_list.getElementsByTagName('LI'));
   const doing_list = document.getElementById('sos_doing');
+  // clean_report(doing_list,doing_list.getElementsByTagName('LI'));
+  const dep_list = document.getElementById('sos_dep');
+  // clean_report(dep_list,dep_list.getElementsByTagName('LI'));
+  const blocker_list = document.getElementById('sos_blocker');
+  // clean_report(blocker_list,blocker_list.getElementsByTagName('LI'));
 
   let pr_repo = elem.pr_repo.value.split(',');
   let issues_repo = elem.issues_repo.value.split(',');
@@ -35,6 +47,9 @@ let buildReport = function() {
   let sprint = elem.sprint.value;
   let done_query = `type:pr is:closed closed:>` + start;
   let doing_query = `type:issue is:open label:${team} milestone:"${sprint}"`;
+  let dep_query = `type:issue is:open label:${team} label:issue/crucial-dep `;
+  let integration_query = `type:issue is:open label:${team} label:issue/integration`;
+  let blocker_query = `type:issue is:open label:${team} label:issue/blocker`;
 
   let github_api_PR_repos=[];
   let github_api_issues_repos=[];
@@ -62,7 +77,6 @@ let buildReport = function() {
       done_list.insertAdjacentHTML('beforeend',`
         <li>
           <a href="${item.html_url}">#${item.number}</a> - ${title[1]?title[1]:item.title} 
-          ${body}
         </li>
       `);
     });
@@ -73,6 +87,28 @@ let buildReport = function() {
     let items = result.items;
     items.forEach(function (item) {
       doing_list.insertAdjacentHTML('beforeend',`
+        <li>
+          <a href="${item.html_url}">#${item.number}</a> - ${item.title}
+        </li>
+      `);
+    });
+  };
+
+  let printDeps = function(result) {
+    let items = result.items;
+    items.forEach(function (item) {
+      dep_list.insertAdjacentHTML('beforeend',`
+        <li>
+          <a href="${item.html_url}">#${item.number}</a> - ${item.title}
+        </li>
+      `);
+    });
+  };
+
+  let printBlockers = function(result) {
+    let items = result.items;
+    items.forEach(function (item) {
+      blocker_list.insertAdjacentHTML('beforeend',`
         <li>
           <a href="${item.html_url}">#${item.number}</a> - ${item.title}
         </li>
@@ -93,5 +129,14 @@ let buildReport = function() {
   });
   github_api_issues_repos.forEach(function (repo) {
     getReport(repo, doing_query, printIssues);
+  });
+  github_api_issues_repos.forEach(function (repo) {
+    getReport(repo, dep_query, printDeps);
+  });
+  github_api_issues_repos.forEach(function (repo) {
+    getReport(repo, integration_query, printDeps);
+  });
+  github_api_issues_repos.forEach(function (repo) {
+    getReport(repo, blocker_query, printBlockers);
   });
 };
