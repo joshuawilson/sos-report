@@ -3,7 +3,7 @@ const elem = form.elements;
 
 let getLastWeekDate = function () {
   let date = new Date();
-  date.setDate(date.getDate()-5);
+  date.setDate(date.getDate()-7);
   let year = date.getFullYear();
   let month = date.getMonth()+1;
   let day = date.getDate();
@@ -39,6 +39,7 @@ let buildReport = function() {
   // clean_report(dep_list,dep_list.getElementsByTagName('LI'));
   const blocker_list = document.getElementById('sos_blocker');
   // clean_report(blocker_list,blocker_list.getElementsByTagName('LI'));
+  const closed_list = document.getElementById('sos_closed_issues');
 
   let pr_repo = elem.pr_repo.value.split(',');
   let issues_repo = elem.issues_repo.value.split(',');
@@ -46,6 +47,8 @@ let buildReport = function() {
   let team = elem.team.value;
   let sprint = elem.sprint.value;
   let done_query = `type:pr is:closed closed:>` + start;
+  let closed_query = `type:issue is:closed label:${team} milestone:"${sprint}" closed:>` + start;
+  //is:issue label:team/platform is:closed sort:updated-desc milestone:"Sprint 149"
   let doing_query = `type:issue is:open label:${team} milestone:"${sprint}"`;
   let dep_query = `type:issue is:open label:${team} label:issue/crucial-dep `;
   let integration_query = `type:issue is:open label:${team} label:issue/integration`;
@@ -116,6 +119,18 @@ let buildReport = function() {
     });
   };
 
+  let printClosedIssues = function(result) {
+    let items = result.items;
+    items.forEach(function (item) {
+      closed_list.insertAdjacentHTML('beforeend',`
+        <li>
+          <a href="${item.html_url}">#${item.number}</a> - ${item.title}
+        </li>
+      `);
+    });
+  };
+
+
   let getReport = function(repo, query, print) {
     $.ajax(repo + query, {
       dataType: 'json'
@@ -138,5 +153,8 @@ let buildReport = function() {
   });
   github_api_issues_repos.forEach(function (repo) {
     getReport(repo, blocker_query, printBlockers);
+  });
+  github_api_issues_repos.forEach(function (repo) {
+    getReport(repo, closed_query, printClosedIssues);
   });
 };
